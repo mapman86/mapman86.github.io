@@ -1,54 +1,78 @@
 /*
-	Editorial by HTML5 UP
-	html5up.net | @ajlkn
+	Highlights by HTML5 UP
+	html5up.net | @n33co
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
 
 (function($) {
 
 	skel.breakpoints({
-		xlarge: '(max-width: 1680px)',
-		large: '(max-width: 1280px)',
+		large: '(max-width: 1680px)',
 		medium: '(max-width: 980px)',
 		small: '(max-width: 736px)',
-		xsmall: '(max-width: 480px)',
-		'xlarge-to-max': '(min-width: 1681px)',
-		'small-to-xlarge': '(min-width: 481px) and (max-width: 1680px)'
+		xsmall: '(max-width: 480px)'
 	});
 
 	$(function() {
 
 		var	$window = $(window),
-			$head = $('head'),
-			$body = $('body');
+			$body = $('body'),
+			$html = $('html');
 
-		// Disable animations/transitions ...
+		// Disable animations/transitions until the page has loaded.
+			$html.addClass('is-loading');
 
-			// ... until the page has loaded.
-				$body.addClass('is-loading');
+			$window.on('load', function() {
+				window.setTimeout(function() {
+					$html.removeClass('is-loading');
+				}, 0);
+			});
 
-				$window.on('load', function() {
-					setTimeout(function() {
-						$body.removeClass('is-loading');
-					}, 100);
-				});
+		// Touch mode.
+			if (skel.vars.mobile) {
 
-			// ... when resizing.
-				var resizeTimeout;
+				var $wrapper;
 
-				$window.on('resize', function() {
+				// Create wrapper.
+					$body.wrapInner('<div id="wrapper" />');
+					$wrapper = $('#wrapper');
 
-					// Mark as resizing.
-						$body.addClass('is-resizing');
+					// Hack: iOS vh bug.
+						if (skel.vars.os == 'ios')
+							$wrapper
+								.css('margin-top', -25)
+								.css('padding-bottom', 25);
 
-					// Unmark after delay.
-						clearTimeout(resizeTimeout);
+					// Pass scroll event to window.
+						$wrapper.on('scroll', function() {
+							$window.trigger('scroll');
+						});
 
-						resizeTimeout = setTimeout(function() {
-							$body.removeClass('is-resizing');
-						}, 100);
+				// Scrolly.
+					$window.on('load.hl_scrolly', function() {
 
-				});
+						$('.scrolly').scrolly({
+							speed: 1500,
+							parent: $wrapper,
+							pollOnce: true
+						});
+
+						$window.off('load.hl_scrolly');
+
+					});
+
+				// Enable touch mode.
+					$html.addClass('is-touch');
+
+			}
+			else {
+
+				// Scrolly.
+					$('.scrolly').scrolly({
+						speed: 1500
+					});
+
+			}
 
 		// Fix: Placeholder polyfill.
 			$('form').placeholder();
@@ -61,224 +85,134 @@
 				);
 			});
 
-		// Fixes.
+		// Header.
+			var $header = $('#header'),
+				$headerTitle = $header.find('header'),
+				$headerContainer = $header.find('.container');
 
-			// Object fit images.
-				if (!skel.canUse('object-fit')
-				||	skel.vars.browser == 'safari')
-					$('.image.object').each(function() {
+			// Make title fixed.
+				if (!skel.vars.mobile) {
 
-						var $this = $(this),
-							$img = $this.children('img');
+					$window.on('load.hl_headerTitle', function() {
 
-						// Hide original image.
-							$img.css('opacity', '0');
+						skel.on('-medium !medium', function() {
 
-						// Set background.
-							$this
-								.css('background-image', 'url("' + $img.attr('src') + '")')
-								.css('background-size', $img.css('object-fit') ? $img.css('object-fit') : 'cover')
-								.css('background-position', $img.css('object-position') ? $img.css('object-position') : 'center');
-
-					});
-
-		// Sidebar.
-			var $sidebar = $('#sidebar'),
-				$sidebar_inner = $sidebar.children('.inner');
-
-			// Inactive by default on <= large.
-				skel
-					.on('+large', function() {
-						$sidebar.addClass('inactive');
-					})
-					.on('-large !large', function() {
-						$sidebar.removeClass('inactive');
-					});
-
-			// Hack: Workaround for Chrome/Android scrollbar position bug.
-				if (skel.vars.os == 'android'
-				&&	skel.vars.browser == 'chrome')
-					$('<style>#sidebar .inner::-webkit-scrollbar { display: none; }</style>')
-						.appendTo($head);
-
-			// Toggle.
-				if (skel.vars.IEVersion > 9) {
-
-					$('<a href="#sidebar" class="toggle">Toggle</a>')
-						.appendTo($sidebar)
-						.on('click', function(event) {
-
-							// Prevent default.
-								event.preventDefault();
-								event.stopPropagation();
-
-							// Toggle.
-								$sidebar.toggleClass('inactive');
+							$headerTitle
+								.css('position', 'fixed')
+								.css('height', 'auto')
+								.css('top', '50%')
+								.css('left', '0')
+								.css('width', '100%')
+								.css('margin-top', ($headerTitle.outerHeight() / -2));
 
 						});
 
+						skel.on('+medium', function() {
+
+							$headerTitle
+								.css('position', '')
+								.css('height', '')
+								.css('top', '')
+								.css('left', '')
+								.css('width', '')
+								.css('margin-top', '');
+
+						});
+
+						$window.off('load.hl_headerTitle');
+
+					});
+
 				}
 
-			// Events.
+			// Scrollex.
+				skel.on('-small !small', function() {
+					$header.scrollex({
+						terminate: function() {
 
-				// Link clicks.
-					$sidebar.on('click', 'a', function(event) {
+							$headerTitle.css('opacity', '');
 
-						// >large? Bail.
-							if (!skel.breakpoint('large').active)
-								return;
+						},
+						scroll: function(progress) {
 
-						// Vars.
-							var $a = $(this),
-								href = $a.attr('href'),
-								target = $a.attr('target');
-
-						// Prevent default.
-							event.preventDefault();
-							event.stopPropagation();
-
-						// Check URL.
-							if (!href || href == '#' || href == '')
-								return;
-
-						// Hide sidebar.
-							$sidebar.addClass('inactive');
-
-						// Redirect to href.
-							setTimeout(function() {
-
-								if (target == '_blank')
-									window.open(href);
+							// Fade out title as user scrolls down.
+								if (progress > 0.5)
+									x = 1 - progress;
 								else
-									window.location.href = href;
+									x = progress;
 
-							}, 500);
+								$headerTitle.css('opacity', Math.max(0, Math.min(1, x * 2)));
 
+						}
 					});
+				});
 
-				// Prevent certain events inside the panel from bubbling.
-					$sidebar.on('click touchend touchstart touchmove', function(event) {
+				skel.on('+small', function() {
 
-						// >large? Bail.
-							if (!skel.breakpoint('large').active)
-								return;
-
-						// Prevent propagation.
-							event.stopPropagation();
-
-					});
-
-				// Hide panel on body click/tap.
-					$body.on('click touchend', function(event) {
-
-						// >large? Bail.
-							if (!skel.breakpoint('large').active)
-								return;
-
-						// Deactivate.
-							$sidebar.addClass('inactive');
-
-					});
-
-			// Scroll lock.
-			// Note: If you do anything to change the height of the sidebar's content, be sure to
-			// trigger 'resize.sidebar-lock' on $window so stuff doesn't get out of sync.
-
-				$window.on('load.sidebar-lock', function() {
-
-					var sh, wh, st;
-
-					// Reset scroll position to 0 if it's 1.
-						if ($window.scrollTop() == 1)
-							$window.scrollTop(0);
-
-					$window
-						.on('scroll.sidebar-lock', function() {
-
-							var x, y;
-
-							// IE<10? Bail.
-								if (skel.vars.IEVersion < 10)
-									return;
-
-							// <=large? Bail.
-								if (skel.breakpoint('large').active) {
-
-									$sidebar_inner
-										.data('locked', 0)
-										.css('position', '')
-										.css('top', '');
-
-									return;
-
-								}
-
-							// Calculate positions.
-								x = Math.max(sh - wh, 0);
-								y = Math.max(0, $window.scrollTop() - x);
-
-							// Lock/unlock.
-								if ($sidebar_inner.data('locked') == 1) {
-
-									if (y <= 0)
-										$sidebar_inner
-											.data('locked', 0)
-											.css('position', '')
-											.css('top', '');
-									else
-										$sidebar_inner
-											.css('top', -1 * x);
-
-								}
-								else {
-
-									if (y > 0)
-										$sidebar_inner
-											.data('locked', 1)
-											.css('position', 'fixed')
-											.css('top', -1 * x);
-
-								}
-
-						})
-						.on('resize.sidebar-lock', function() {
-
-							// Calculate heights.
-								wh = $window.height();
-								sh = $sidebar_inner.outerHeight() + 30;
-
-							// Trigger scroll.
-								$window.trigger('scroll.sidebar-lock');
-
-						})
-						.trigger('resize.sidebar-lock');
-
-					});
-
-		// Menu.
-			var $menu = $('#menu'),
-				$menu_openers = $menu.children('ul').find('.opener');
-
-			// Openers.
-				$menu_openers.each(function() {
-
-					var $this = $(this);
-
-					$this.on('click', function(event) {
-
-						// Prevent default.
-							event.preventDefault();
-
-						// Toggle.
-							$menu_openers.not($this).removeClass('active');
-							$this.toggleClass('active');
-
-						// Trigger resize (sidebar lock).
-							$window.triggerHandler('resize.sidebar-lock');
-
-					});
+					$header.unscrollex();
 
 				});
+
+		// Main sections.
+			$('.main').each(function() {
+
+				var $this = $(this),
+					$primaryImg = $this.find('.image.primary > img'),
+					$bg,
+					options;
+
+				// No primary image? Bail.
+					if ($primaryImg.length == 0)
+						return;
+
+				// Hack: IE8 fallback.
+					if (skel.vars.IEVersion < 9) {
+
+						$this
+							.css('background-image', 'url("' + $primaryImg.attr('src') + '")')
+							.css('-ms-behavior', 'url("css/ie/backgroundsize.min.htc")');
+
+						return;
+
+					}
+
+				// Create bg and append it to body.
+					$bg = $('<div class="main-bg" id="' + $this.attr('id') + '-bg"></div>')
+						.css('background-image', (
+							'url("css/images/overlay.png"), url("' + $primaryImg.attr('src') + '")'
+						))
+						.appendTo($body);
+
+				// Scrollex.
+					options = {
+						mode: 'middle',
+						delay: 200,
+						top: '-10vh',
+						bottom: '-10vh'
+					};
+
+					if (skel.canUse('transition')) {
+
+						options.init = function() { $bg.removeClass('active'); };
+						options.enter = function() { $bg.addClass('active'); };
+						options.leave = function() { $bg.removeClass('active'); };
+
+					}
+					else {
+
+						$bg
+							.css('opacity', 1)
+							.hide();
+
+						options.init = function() { $bg.fadeOut(0); };
+						options.enter = function() { $bg.fadeIn(400); };
+						options.leave = function() { $bg.fadeOut(400); };
+
+					}
+
+					$this.scrollex(options);
+
+			});
 
 	});
 
